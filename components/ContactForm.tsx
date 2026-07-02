@@ -66,7 +66,7 @@ export default function ContactForm() {
           maxLength={2000}
           aria-invalid={hasError}
           aria-describedby="contact-form-status"
-          className={`${inputClass} resize-none`}
+          className={`${inputClass} resize-none text-black placeholder:text-black`}
         />
       </div>
 
