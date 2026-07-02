@@ -1,8 +1,10 @@
 import Hero from "@/components/Hero";
 import About from "@/components/About";
 import FeaturedProducts from "@/components/FeaturedProducts";
+import Order from "@/components/Order";
 import Newsletter from "@/components/Newsletter";
 import Contact from "@/components/Contact";
+import Footer from "@/components/Footer";
 
 // Revalidate daily so the footer year (and any other build-time values)
 // don't go stale between deploys.
@@ -15,12 +17,11 @@ export default function Home() {
         <Hero />
         <About />
         <FeaturedProducts />
+        <Order />
         <Newsletter />
         <Contact />
       </main>
-      <footer className="bg-amber-900 text-amber-200 text-center text-sm py-6">
-        © {new Date().getFullYear()} Sweet Crumbs Bakery. All rights reserved.
-      </footer>
+      <Footer />
     </div>
   );
 }
