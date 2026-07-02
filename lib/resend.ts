@@ -52,3 +52,11 @@ export async function sendWeeklyDealsEmails(
 
   return { sent, failed }
 }
+
+/** Sends a single transactional email (e.g. a welcome message right after signup). */
+export async function sendEmail(to: string, content: EmailContent): Promise<{ sent: boolean }> {
+  const resend = getResendClient()
+  const from = process.env.RESEND_FROM_EMAIL ?? 'Sweet Crumbs Bakery <deals@example.com>'
+  const { error } = await resend.emails.send({ from, to: [to], subject: content.subject, html: content.html })
+  return { sent: !error }
+}

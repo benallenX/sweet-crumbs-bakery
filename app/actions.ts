@@ -1,6 +1,9 @@
 'use server'
 
 import { getSupabaseAnonClient } from '@/lib/supabase'
+import { sendEmail } from '@/lib/resend'
+import { sendWeeklyDealsSms } from '@/lib/twilio'
+import { welcomeMessage } from '@/content/welcome-message'
 
 export type ContactState = {
   success: boolean
@@ -87,6 +90,8 @@ export async function subscribeToDeals(
     }
   }
 
+  const unsubscribeToken = crypto.randomUUID()
+
   const supabase = getSupabaseAnonClient()
   const { error } = await supabase.from('subscribers').insert({
     name: name || null,
@@ -94,6 +99,7 @@ export async function subscribeToDeals(
     phone,
     email_opt_in: emailOptIn,
     sms_opt_in: smsOptIn,
+    unsubscribe_token: unsubscribeToken,
   })
 
   if (error) {
@@ -101,6 +107,34 @@ export async function subscribeToDeals(
       return { success: false, error: "Looks like you're already signed up!" }
     }
     return { success: false, error: 'Something went wrong. Please try again.' }
+  }
+
+  // Best-effort welcome message — signup already succeeded, so a delivery
+  // hiccup here shouldn't turn into a user-facing error.
+  try {
+    const siteUrl = process.env.NEXT_PUBLIC_SITE_URL ?? 'http://localhost:3000'
+    const unsubscribeUrl = `${siteUrl}/api/unsubscribe?token=${unsubscribeToken}`
+
+    if (emailOptIn) {
+      await sendEmail(email, {
+        subject: welcomeMessage.subject,
+        html: `
+          <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+            <h1 style="color: #78350f;">${welcomeMessage.headline}</h1>
+            <p>${welcomeMessage.intro}</p>
+            <p style="margin-top: 2rem; font-size: 12px; color: #71717a;">
+              <a href="${unsubscribeUrl}">Unsubscribe</a> from Sweet Crumbs Bakery emails.
+            </p>
+          </div>
+        `,
+      })
+    }
+
+    if (smsOptIn && phone) {
+      await sendWeeklyDealsSms([{ phone }], welcomeMessage.smsBody)
+    }
+  } catch {
+    // Swallow delivery errors; the subscriber row was already created successfully.
   }
 
   return { success: true, error: '' }
