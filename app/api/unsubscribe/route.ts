@@ -27,6 +27,11 @@ export async function GET(request: NextRequest) {
     <p>You won't receive any more deals or menu updates from Sweet Crumbs Bakery.</p>
   </body>
 </html>`,
-    { headers: { 'Content-Type': 'text/html; charset=utf-8' } }
+    {
+      headers: {
+        'Content-Type': 'text/html; charset=utf-8',
+        'Cache-Control': 'no-store',
+      },
+    }
   )
 }

@@ -1,3 +1,4 @@
+import Image from "next/image";
 import ScrollReveal from "@/components/ScrollReveal";
 
 export default function About() {
@@ -5,8 +6,14 @@ export default function About() {
     <section id="about" className="py-24 px-6 bg-white">
       <div className="max-w-4xl mx-auto flex flex-col md:flex-row gap-12 items-center">
         <ScrollReveal className="flex-1">
-          <div aria-hidden="true" className="bg-amber-100 rounded-2xl h-72 flex items-center justify-center text-6xl">
-            🧁
+          <div className="relative rounded-2xl h-72 w-full overflow-hidden">
+            <Image
+              src="/images/about.jpg"
+              alt="A baker's flour-dusted hands shaping fresh dough"
+              fill
+              sizes="(min-width: 768px) 40vw, 90vw"
+              className="object-cover"
+            />
           </div>
         </ScrollReveal>
         <ScrollReveal className="flex-1" delay={0.15}>

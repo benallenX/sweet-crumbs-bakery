@@ -15,6 +15,11 @@ export type SubscribeState = {
   error: string
 }
 
+export type OrderState = {
+  success: boolean
+  error: string
+}
+
 const EMAIL_PATTERN = /^[^\s@]+@[^\s@]+\.[^\s@]+$/
 const US_PHONE_DIGITS_PATTERN = /^\d{10}$/
 
@@ -135,6 +140,88 @@ export async function subscribeToDeals(
     }
   } catch {
     // Swallow delivery errors; the subscriber row was already created successfully.
+  }
+
+  return { success: true, error: '' }
+}
+
+export async function submitOrderRequest(
+  _prev: OrderState,
+  formData: FormData
+): Promise<OrderState> {
+  // Honeypot: real users never fill this hidden field, bots usually do.
+  if (getTrimmedString(formData, 'company', 200)) {
+    return { success: true, error: '' }
+  }
+
+  const name = getTrimmedString(formData, 'name', 100)
+  const email = getTrimmedString(formData, 'email', 200)
+  const phoneRaw = getTrimmedString(formData, 'phone', 30)
+  const item = getTrimmedString(formData, 'item', 200)
+  const neededBy = getTrimmedString(formData, 'neededBy', 10)
+  const notes = getTrimmedString(formData, 'notes', 1000)
+  const quantityRaw = getTrimmedString(formData, 'quantity', 10)
+
+  if (!name || !item) {
+    return { success: false, error: 'Please share your name and what you’d like to order.' }
+  }
+
+  if (!email && !phoneRaw) {
+    return { success: false, error: 'Please provide an email or phone number so we can reach you.' }
+  }
+
+  if (email && !EMAIL_PATTERN.test(email)) {
+    return { success: false, error: 'Please enter a valid email address.' }
+  }
+
+  let phone: string | null = null
+  if (phoneRaw) {
+    phone = normalizeUsPhone(phoneRaw)
+    if (!phone) {
+      return { success: false, error: 'Please enter a valid 10-digit phone number.' }
+    }
+  }
+
+  const quantity = Math.min(Math.max(parseInt(quantityRaw, 10) || 1, 1), 500)
+
+  const supabase = getSupabaseAnonClient()
+  const { error } = await supabase.from('order_requests').insert({
+    name,
+    email: email || null,
+    phone,
+    item,
+    quantity,
+    needed_by: neededBy || null,
+    notes: notes || null,
+  })
+
+  if (error) {
+    return { success: false, error: 'Something went wrong. Please try again.' }
+  }
+
+  // Best-effort notification — the request was already saved, so a delivery
+  // hiccup here shouldn't turn into a user-facing error.
+  try {
+    const notifyEmail = process.env.BAKERY_ORDER_NOTIFICATION_EMAIL ?? 'orders@example.com'
+    await sendEmail(notifyEmail, {
+      subject: `New order request: ${item}`,
+      html: `
+        <div style="font-family: sans-serif; max-width: 480px; margin: 0 auto;">
+          <h1 style="color: #78350f;">New Order Request</h1>
+          <ul>
+            <li><strong>Name:</strong> ${name}</li>
+            ${email ? `<li><strong>Email:</strong> ${email}</li>` : ''}
+            ${phone ? `<li><strong>Phone:</strong> ${phone}</li>` : ''}
+            <li><strong>Item:</strong> ${item}</li>
+            <li><strong>Quantity:</strong> ${quantity}</li>
+            ${neededBy ? `<li><strong>Needed by:</strong> ${neededBy}</li>` : ''}
+            ${notes ? `<li><strong>Notes:</strong> ${notes}</li>` : ''}
+          </ul>
+        </div>
+      `,
+    })
+  } catch {
+    // Swallow delivery errors; the order request row was already created successfully.
   }
 
   return { success: true, error: '' }
