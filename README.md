@@ -93,6 +93,3 @@ public/images/               stock photography (see CREDITS.md for licensing)
 
 
 
-## Deployment
-
-Deployed on Vercel. `vercel.json` defines the weekly-deals cron schedule. Set the same environment variables from `.env.local.example` in the Vercel project settings, and make sure `NEXT_PUBLIC_SITE_URL` points at the real production domain — it drives canonical URLs, the sitemap, robots.txt, and unsubscribe links.
