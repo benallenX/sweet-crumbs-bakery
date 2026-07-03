@@ -89,19 +89,6 @@ lib/
   resend.ts, twilio.ts       email/SMS send helpers
 content/                    copy for transactional messages (welcome, weekly deal)
 public/images/               stock photography (see CREDITS.md for licensing)
-```
-
-## Getting started
-
-```bash
-npm install
-cp .env.local.example .env.local   # fill in Supabase/Resend/Twilio credentials
-npm run dev
-```
-
-Open [http://localhost:3000](http://localhost:3000).
-
-See `.env.local.example` for the full list of required environment variables and where to get each one (Supabase project settings, Resend API keys, Twilio console).
 
 ## Deployment
 
